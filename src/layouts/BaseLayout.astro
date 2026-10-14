@@ -8,9 +8,10 @@ interface Props {
   title: string;
   description?: string;
   mainClass?: string;
+  footerClass?: string;
 }
 
-const { title, description = "Blog", mainClass } = Astro.props;
+const { title, description = "Blog", mainClass, footerClass } = Astro.props;
 const siteName = title;
 ---
 
@@ -122,8 +123,10 @@ const siteName = title;
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <p>© {new Date().getFullYear()} {siteName} · 由 Astro 驱动</p>
+    <footer class={footerClass ? `site-footer ${footerClass}` : "site-footer"}>
+      <div class="site-footer-inner">
+        <p>© {new Date().getFullYear()} {siteName} · 由 Astro 驱动</p>
+      </div>
     </footer>
 
     <ThemeToggle />
@@ -283,21 +286,31 @@ const siteName = title;
    * right, so the article centres itself in the remaining space. Widen the
    * container past the usual max-width so there is room to do that.
    */
-  .site-main--detail {
+  .site-main--detail,
+  .site-footer--detail {
     max-width: none;
     padding-right: max(20px, 17rem);
   }
 
+  /*
+   * The footer rule has to line up with the article's (`.post-footer`), so it
+   * lives on an inner column that mirrors `.post`: centred, capped at the
+   * reading width, and with no horizontal padding of its own — the border then
+   * spans exactly the text column.
+   */
+  .site-footer-inner {
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-block: 28px 40px;
+    border-top: 1px solid var(--border);
+  }
+
   @media (max-width: 900px) {
-    .site-main--detail {
+    .site-main--detail,
+    .site-footer--detail {
       max-width: var(--max-width);
       padding-right: 20px;
     }
-  }
-
-  .site-footer {
-    padding-block: 28px 40px;
-    border-top: 1px solid var(--border);
   }
 
   .site-footer p {
