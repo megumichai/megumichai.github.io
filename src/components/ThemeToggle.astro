@@ -1,0 +1,166 @@
+---
+/*
+ * Presentational: BaseLayout's inline head script owns the theme state (it has
+ * to run before paint to avoid a flash) and stamps `data-theme-mode` here so
+ * the matching icon shows.
+ */
+---
+
+<button
+  class="theme-toggle"
+  type="button"
+  data-theme-toggle
+  aria-label="主题"
+  title="主题"
+>
+  <span class="theme-toggle-box">
+    <span class="theme-toggle-face">
+      <svg
+        class="theme-icon theme-icon--light"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="4"></circle>
+        <path
+          d="M12 2v2m0 16v2M4.6 4.6l1.4 1.4m12 12 1.4 1.4M2 12h2m16 0h2M4.6 19.4l1.4-1.4m12-12 1.4-1.4"
+        ></path>
+      </svg>
+      <svg
+        class="theme-icon theme-icon--dark"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+      </svg>
+      <svg
+        class="theme-icon theme-icon--system"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="13" rx="2"></rect>
+        <path d="M8 21h8m-4-4v4"></path>
+      </svg>
+    </span>
+  </span>
+</button>
+
+<style>
+  /* A miniature of a post-list item: the same 3D tile pinned to the corner. */
+  .theme-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 5;
+    --box-depth: 13px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    perspective: 800px;
+    /* Hold the tile still while the rest of the page morphs between routes. */
+    view-transition-name: theme-toggle;
+  }
+
+  .theme-toggle-box {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 44px;
+    transform-style: preserve-3d;
+    transform: rotateY(26deg) rotateX(-10deg);
+    transition: transform 0.2s ease;
+  }
+
+  .theme-toggle:hover .theme-toggle-box {
+    transform: rotateY(32deg) rotateX(-13deg);
+  }
+
+  /* Left face — folded backward off the left edge. */
+  .theme-toggle-box::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--box-depth);
+    background-color: var(--box-left);
+    border-radius: 0 6px 6px 0;
+    transform-origin: left center;
+    transform: rotateY(90deg);
+  }
+
+  /* Top face — folded backward off the top edge. */
+  .theme-toggle-box::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--box-depth);
+    background-color: var(--box-top);
+    border-radius: 0 0 6px 6px;
+    transform-origin: center top;
+    transform: rotateX(-90deg);
+  }
+
+  /* Front face — holds the icon. */
+  .theme-toggle-face {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 18px 24px -20px var(--shadow-color);
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .theme-toggle:hover .theme-toggle-face {
+    color: var(--accent);
+  }
+
+  .theme-toggle:focus-visible {
+    outline: none;
+  }
+
+  .theme-toggle:focus-visible .theme-toggle-face {
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
+  }
+
+  .theme-icon {
+    display: none;
+    width: 19px;
+    height: 19px;
+  }
+
+  /* One icon per mode; the head script sets data-theme-mode on the button. */
+  .theme-toggle[data-theme-mode="light"] .theme-icon--light,
+  .theme-toggle[data-theme-mode="dark"] .theme-icon--dark,
+  .theme-toggle[data-theme-mode="system"] .theme-icon--system,
+  .theme-toggle:not([data-theme-mode]) .theme-icon--system {
+    display: block;
+  }
+
+  @media print {
+    .theme-toggle {
+      display: none;
+    }
+  }
+</style>

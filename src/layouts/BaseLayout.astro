@@ -2,6 +2,7 @@
 import { ClientRouter } from "astro:transitions";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
+import ThemeToggle from "../components/ThemeToggle.astro";
 
 interface Props {
   title: string;
@@ -34,6 +35,87 @@ const siteName = title;
     />
     <title>{title === siteName ? title : `${title} · ${siteName}`}</title>
     <ClientRouter />
+    <script is:inline>
+      /*
+       * Theme state lives here rather than in ThemeToggle because it has to run
+       * before paint: resolving the stored mode during parsing means the first
+       * frame already carries the right palette, so there is no flash.
+       *
+       * The stored value is "light" | "dark" | absent ("follow the system").
+       * We resolve that to an explicit data-theme on <html> and mirror the raw
+       * mode in data-theme-mode, which is what picks the toggle's icon.
+       */
+      (() => {
+        const KEY = "theme";
+        const MODES = ["light", "dark", "system"];
+        const LABELS = { light: "明亮", dark: "暗色", system: "跟随系统" };
+        const QUERY = "(prefers-color-scheme: dark)";
+
+        const readMode = () => {
+          try {
+            const value = localStorage.getItem(KEY);
+            return MODES.includes(value) ? value : "system";
+          } catch {
+            return "system";
+          }
+        };
+
+        const applyMode = (mode) => {
+          const root = document.documentElement;
+          const dark =
+            mode === "dark" ||
+            (mode === "system" && matchMedia(QUERY).matches);
+          root.dataset.theme = dark ? "dark" : "light";
+          root.dataset.themeMode = mode;
+
+          // Keep the browser chrome in step too: the media-attributed metas
+          // above only follow the system, so take them over once JS is here.
+          document
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach((meta) => {
+              meta.removeAttribute("media");
+              meta.setAttribute("content", dark ? "#000000" : "#fafafa");
+            });
+
+          const toggle = document.querySelector("[data-theme-toggle]");
+          if (!toggle) return;
+          toggle.dataset.themeMode = mode;
+          const label = `主题：${LABELS[mode]}`;
+          toggle.setAttribute("aria-label", label);
+          toggle.setAttribute("title", label);
+        };
+
+        const init = () => applyMode(readMode());
+
+        if (!window.__themeReady) {
+          window.__themeReady = true;
+
+          document.addEventListener("click", (event) => {
+            if (!event.target.closest?.("[data-theme-toggle]")) return;
+            const mode = readMode();
+            const next = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+            try {
+              if (next === "system") localStorage.removeItem(KEY);
+              else localStorage.setItem(KEY, next);
+            } catch {
+              /* storage unavailable — still switch, just don't remember */
+            }
+            applyMode(next);
+          });
+
+          matchMedia(QUERY).addEventListener("change", () => {
+            if (readMode() === "system") applyMode("system");
+          });
+
+          // ClientRouter swaps the body on navigation, so re-stamp the new
+          // toggle once the fresh markup has landed (also on first load).
+          document.addEventListener("astro:page-load", init);
+          document.addEventListener("DOMContentLoaded", init);
+        }
+
+        init();
+      })();
+    </script>
   </head>
   <body>
     <main class={mainClass ? `site-main ${mainClass}` : "site-main"}>
@@ -43,6 +125,8 @@ const siteName = title;
     <footer class="site-footer">
       <p>© {new Date().getFullYear()} {siteName} · 由 Astro 驱动</p>
     </footer>
+
+    <ThemeToggle />
   </body>
 </html>
 
@@ -108,34 +192,37 @@ const siteName = title;
     --max-width: 680px;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color-scheme: dark;
+  /*
+   * Dark palette. The reader's choice (or "follow the system", which the head
+   * script resolves at parse time) is stamped on <html> as data-theme, so this
+   * is the single source of dark values — no duplicated media-query block.
+   */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
 
-      --bg: #000000;
-      --surface: #111111;
-      --surface-recessed: #1a1a1a;
+    --bg: #000000;
+    --surface: #111111;
+    --surface-recessed: #1a1a1a;
 
-      --text: #ededed;
-      --text-secondary: #a1a1a1;
-      --text-muted: #6f6f6f;
+    --text: #ededed;
+    --text-secondary: #a1a1a1;
+    --text-muted: #6f6f6f;
 
-      --border: #2a2a2a;
-      --border-strong: #3a3a3a;
+    --border: #2a2a2a;
+    --border-strong: #3a3a3a;
 
-      --accent: #3291ff;
-      --accent-hover: #52a8ff;
-      --accent-subtle: #0f2438;
+    --accent: #3291ff;
+    --accent-hover: #52a8ff;
+    --accent-subtle: #0f2438;
 
-      --code-bg: #111111;
-      --code-text: #ededed;
-      --code-inline-bg: #1f1f1f;
+    --code-bg: #111111;
+    --code-text: #ededed;
+    --code-inline-bg: #1f1f1f;
 
-      --shadow-color: rgba(0, 0, 0, 0.7);
+    --shadow-color: rgba(0, 0, 0, 0.7);
 
-      --box-top: #1c1c1c;
-      --box-left: #050505;
-    }
+    --box-top: #1c1c1c;
+    --box-left: #050505;
   }
 
   *,
