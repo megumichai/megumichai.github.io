@@ -11,6 +11,7 @@ const posts = defineCollection({
     url: z.string().url().optional(),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
+    pinned: z.boolean().default(false),
   }),
 });
 

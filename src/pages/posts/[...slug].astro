@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
 import { formatDate } from "../../utils/date";
+import { byPinnedThenDate } from "../../utils/posts";
 
 export async function getStaticPaths() {
   const posts = await getCollection(
@@ -19,7 +20,7 @@ const { Content } = await render(post);
 // adjacent to the current one (the previous and next entries).
 const ordered = (await getCollection("posts"))
   .filter((entry) => !entry.data.draft)
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  .sort(byPinnedThenDate);
 
 const current = ordered.findIndex((entry) => entry.id === post.id);
 const neighbours = ordered.filter(
