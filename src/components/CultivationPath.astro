@@ -9,7 +9,7 @@ interface Props {
   /** Realms in ascending order, lowest → highest. */
   realms?: Realm[];
   /** The realm currently being cultivated; must appear in `realms`. */
-  current?: string;
+  current: string;
   /** Current sub-stage; must appear in the current realm's `sub`. */
   currentSub?: string;
 }
@@ -24,8 +24,8 @@ const {
     { name: "元婴期", sub: SUB_STAGES },
     { name: "化神期", sub: SUB_STAGES },
   ],
-  current = "筑基期",
-  currentSub = "后期",
+  current,
+  currentSub,
 } = Astro.props;
 
 const realmIndex = realms.findIndex((realm) => realm.name === current);
@@ -36,29 +36,28 @@ function realmState(index: number): "done" | "current" | "future" {
   return index < realmIndex ? "done" : "future";
 }
 
-/** Sub-stages are ordered the same way, but only within the current realm. */
-function subState(realmIdx: number, subIdx: number) {
-  const state = realmState(realmIdx);
-  if (state !== "current") return state;
-  const subIndex = realms[realmIdx].sub?.indexOf(currentSub) ?? -1;
+/** Sub-stages are only ever listed for the current realm, so this just orders
+    them relative to the one being cultivated. */
+function subState(subIdx: number) {
+  const subIndex = realms[realmIndex].sub?.indexOf(currentSub) ?? -1;
   if (subIdx === subIndex) return "current";
   return subIdx < subIndex ? "done" : "future";
 }
 ---
 
-<ol class="cultivation" aria-label="修仙体系">
+<ol class="cultivation" aria-label="境界">
   {
     realms.map((realm, realmIdx) => {
       const state = realmState(realmIdx);
       return (
         <li class={`realm realm--${state}`}>
           <span class="realm-name">{realm.name}</span>
-          {/* A completed realm needs no breakdown: every sub-stage is behind
-              us, so only the current and the still-ahead realms list theirs. */}
-          {realm.sub && state !== "done" && (
+          {/* Only the realm being cultivated needs its breakdown — completed
+              and not-yet-reached realms list no sub-stages. */}
+          {state === "current" && realm.sub && (
             <ol class="sub-stages">
               {realm.sub.map((sub, subIdx) => (
-                <li class={`sub-stage sub-stage--${subState(realmIdx, subIdx)}`}>
+                <li class={`sub-stage sub-stage--${subState(subIdx)}`}>
                   <span class="sub-stage-name">{sub}</span>
                 </li>
               ))}
