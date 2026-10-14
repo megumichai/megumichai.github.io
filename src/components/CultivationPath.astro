@@ -39,7 +39,7 @@ function realmState(index: number): "done" | "current" | "future" {
 /** Sub-stages are only ever listed for the current realm, so this just orders
     them relative to the one being cultivated. */
 function subState(subIdx: number) {
-  const subIndex = realms[realmIndex].sub?.indexOf(currentSub) ?? -1;
+  const subIndex = realms[realmIndex].sub?.indexOf(currentSub!) ?? -1;
   if (subIdx === subIndex) return "current";
   return subIdx < subIndex ? "done" : "future";
 }
@@ -123,7 +123,7 @@ function subState(subIdx: number) {
     height: 7px;
     border-radius: 50%;
     background-color: var(--border-strong);
-    transform: translateX(-50%);
+    transform: translateX(-100%);
   }
 
   .realm--current::before {
