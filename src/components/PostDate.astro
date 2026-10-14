@@ -1,0 +1,65 @@
+---
+import { formatDate } from "../utils/date";
+
+interface Props {
+  date: Date;
+  /**
+   * Repaint the stamp as the viewer's current day instead of `date`. Used by
+   * the pinned About post, whose date should never be allowed to go stale.
+   */
+  live?: boolean;
+}
+
+const { date, live = false } = Astro.props;
+
+// A static build can only ever render *its own* today; the client script below
+// corrects it to the viewer's. Until then this stands in as the no-JS value.
+const shown = live ? new Date() : date;
+---
+
+<time
+  class="post-date"
+  datetime={shown.toISOString()}
+  data-post-date-today={live ? true : undefined}
+>
+  {formatDate(shown)}
+</time>
+
+<style>
+  .post-date {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
+<script>
+  import { formatDate } from "../utils/date";
+
+  /* Astro bundles this once no matter how many stamps are on the page, so
+     there is a single set of listeners shared by the list and the article. */
+  const today = () => {
+    const now = new Date();
+    return {
+      text: formatDate(now),
+      // Local calendar day, not the UTC one toISOString() would give.
+      iso: [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+      ].join("-"),
+    };
+  };
+
+  const paint = () => {
+    const { text, iso } = today();
+    document.querySelectorAll("[data-post-date-today]").forEach((el) => {
+      el.setAttribute("datetime", iso);
+      el.textContent = text;
+    });
+  };
+
+  paint();
+  // ClientRouter swaps the body on navigation, so repaint the fresh markup.
+  document.addEventListener("astro:page-load", paint);
+</script>

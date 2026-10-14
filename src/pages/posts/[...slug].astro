@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostList from "../../components/PostList.astro";
-import { formatDate } from "../../utils/date";
+import PostDate from "../../components/PostDate.astro";
 import { byPinnedThenDate } from "../../utils/posts";
 
 export async function getStaticPaths() {
@@ -37,9 +37,10 @@ const neighbours = ordered.filter(
     <header class="post-header" transition:name={post.id}>
       <h1>{post.data.title}</h1>
       <p class="post-meta">
-        <time datetime={post.data.pubDate.toISOString()}>
-          {formatDate(post.data.pubDate)}
-        </time>
+        <PostDate
+          date={post.data.pubDate}
+          live={post.data.dateMode === "today"}
+        />
         {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
       </p>
     </header>

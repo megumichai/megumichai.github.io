@@ -7,6 +7,12 @@ const posts = defineCollection({
     title: z.string(),
     description: z.string(),
     pubDate: z.coerce.date(),
+    /**
+     * "today" makes an entry's date track the viewer's current day instead of
+     * the frontmatter date — used by the pinned About post, whose date should
+     * never go stale. pubDate still drives the ordering either way.
+     */
+    dateMode: z.enum(["fixed", "today"]).default("fixed"),
     type: z.enum(["post", "demo"]).default("post"),
     url: z.string().url().optional(),
     tags: z.array(z.string()).default([]),
