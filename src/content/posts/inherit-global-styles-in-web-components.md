@@ -1,5 +1,5 @@
 ---
-title: Web Components 如何继承全局样式
+title: Web Components 继承全局样式
 description: 把页面的全局样式表注入 Shadow Root，让 Web Components 在保持样式隔离的同时复用已有的设计系统。
 pubDate: 2026-07-09
 tags: ["Web Components", "CSS"]

@@ -1,5 +1,5 @@
 ---
-title: Chrome滚动搜索插件 Infinite Search
+title: Chrome 滚动搜索插件
 description: 为 Google 搜索结果页提供无限滚动的 Chrome 插件，把需要一页页翻的搜索体验变成一条连续的搜索结果流。
 pubDate: 2026-07-07
 tags: ["Chrome", "插件"]
