@@ -98,10 +98,14 @@ function subState(realmIdx: number, subIdx: number) {
     opacity: 0.5;
   }
 
-  /* Stages already cultivated are crossed out. */
+  /* Stages already cultivated are crossed out. The 50% fade swallows the
+     default hairline, so the line is drawn thicker and in the full text
+     colour: after the dimming it still reads as a clear strike. */
   .realm--done > .realm-name,
   .sub-stage--done > .sub-stage-name {
     text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--text);
   }
 
   .realm--current > .realm-name,
