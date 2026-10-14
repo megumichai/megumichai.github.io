@@ -1,0 +1,51 @@
+---
+interface Props {
+  /** The "秘籍" — front-end techniques shown as a tag cloud. */
+  manuals?: string[];
+}
+
+const {
+  manuals = [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "TypeScript",
+    "Vue",
+    "React",
+    "Astro",
+    "Node.js",
+    "Vite",
+    "Git",
+    "Web Components",
+  ],
+} = Astro.props;
+---
+
+<ul class="manuals" aria-label="秘籍">
+  {manuals.map((manual) => <li class="manual">{manual}</li>)}
+</ul>
+
+<style>
+  .manuals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 1.5em 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .manual {
+    margin: 0;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    /* A slightly rounded chip rather than a full pill. */
+    border-radius: var(--radius);
+    background-color: var(--surface-recessed);
+    color: var(--text-secondary);
+    /* Techniques read like code, so keep them in mono. */
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+</style>

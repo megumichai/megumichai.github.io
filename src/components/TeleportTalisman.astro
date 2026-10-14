@@ -1,0 +1,73 @@
+---
+interface Props {
+  /** Where the talisman sends you. */
+  href?: string;
+  /** Name shown next to the seal. */
+  label?: string;
+}
+
+const {
+  href = "https://github.com/megumichai",
+  label = "GitHub",
+} = Astro.props;
+---
+
+<a class="talisman" href={href} target="_blank" rel="noopener noreferrer">
+  <span class="talisman-seal" aria-hidden="true">符</span>
+  <span class="talisman-label">{label}</span>
+  <span class="talisman-arrow" aria-hidden="true">↗</span>
+</a>
+
+<style>
+  .talisman {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 1.5em 0;
+    padding: 8px 16px 8px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--text);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    text-decoration: none;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .talisman:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  /* A little seal stamped on the left. */
+  .talisman-seal {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    background-color: var(--accent-subtle);
+    color: var(--accent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .talisman-label {
+    font-family: var(--font-mono);
+  }
+
+  .talisman-arrow {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .talisman:hover .talisman-arrow {
+    color: inherit;
+  }
+</style>
