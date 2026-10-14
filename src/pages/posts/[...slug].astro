@@ -15,11 +15,16 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
-// Same ordered list that the home page shows, reused here so the list can be
-// morphed (rather than removed) by the view transition.
-const allPosts = (await getCollection("posts"))
+// Same ordering the home list uses; the dock only shows the two entries
+// adjacent to the current one (the previous and next entries).
+const ordered = (await getCollection("posts"))
   .filter((entry) => !entry.data.draft)
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const current = ordered.findIndex((entry) => entry.id === post.id);
+const neighbours = ordered.filter(
+  (_, index) => index === current - 1 || index === current + 1,
+);
 ---
 
 <BaseLayout
@@ -28,17 +33,13 @@ const allPosts = (await getCollection("posts"))
   mainClass="site-main--detail"
 >
   <article class="post">
-    <header class="post-header">
-      <h1 transition:name={`post-title-${post.id}`}>{post.data.title}</h1>
+    <header class="post-header" transition:name={post.id}>
+      <h1>{post.data.title}</h1>
       <p class="post-meta">
         <time datetime={post.data.pubDate.toISOString()}>
           {formatDate(post.data.pubDate)}
         </time>
-        {
-          post.data.tags.map((tag) => (
-            <span class="tag">{tag}</span>
-          ))
-        }
+        {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
       </p>
     </header>
 
@@ -52,7 +53,7 @@ const allPosts = (await getCollection("posts"))
   </article>
 
   <div class="post-list-dock">
-    <PostList posts={allPosts} />
+    <PostList posts={neighbours} />
   </div>
 </BaseLayout>
 

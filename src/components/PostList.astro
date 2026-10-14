@@ -9,13 +9,16 @@ interface Props {
 const { posts } = Astro.props;
 ---
 
-<ul class="post-list" transition:name="post-list">
+<ul class="post-list">
   {
     posts.map((post) => {
       const isDemo = post.data.type === "demo";
       const href = isDemo ? post.data.url : `/posts/${post.id}`;
       return (
-        <li class="post-item">
+        <li
+          class="post-item"
+          transition:name={post.id}
+        >
           <div class="post-box">
             <div class="post-face">
               <div class="post-main">
@@ -28,7 +31,10 @@ const { posts } = Astro.props;
                 >
                   {post.data.title}
                 </a>
-                <time class="post-date" datetime={post.data.pubDate.toISOString()}>
+                <time
+                  class="post-date"
+                  datetime={post.data.pubDate.toISOString()}
+                >
                   {formatDate(post.data.pubDate)}
                 </time>
               </div>
@@ -52,47 +58,12 @@ const { posts } = Astro.props;
   }
 </ul>
 
-<script>
-  /*
-   * Right before the router takes its "old" snapshot, name only the clicked
-   * entry's title so it morphs into the detail heading (both end up carrying
-   * view-transition-name="post-title-<id>").
-   *
-   * The list itself carries view-transition-name="post-list" on *both* the
-   * home page and the post page, so instead of sliding away and disappearing
-   * it morphs from its centered position to the docked, half off-screen
-   * position and simply stays there.
-   */
-  const KEY = "__postListTransitionBound";
-  const w = window as unknown as Record<string, boolean>;
-
-  if (!w[KEY]) {
-    w[KEY] = true;
-
-    document.addEventListener(
-      "click",
-      (event) => {
-        const target = event.target as Element | null;
-        const link = target?.closest<HTMLAnchorElement>("a.post-title");
-        // Demo links open in a new tab, so they never get a transition.
-        if (!link || link.target === "_blank") return;
-
-        const id = link.dataset.postId;
-        if (!id) return;
-
-        link.style.setProperty("view-transition-name", `post-title-${id}`);
-      },
-      true,
-    );
-  }
-</script>
-
 <style>
   .post-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 24px;
     width: 100%;
     margin: 0;
     padding: 0;
@@ -103,6 +74,9 @@ const { posts } = Astro.props;
   .post-item {
     --box-depth: 60px;
     perspective: 2000px;
+    /* leave room inside the box for the top face, which is painted above
+       the front face; otherwise the view-transition snapshot clips it */
+    padding-top: 16px;
   }
 
   .post-box {
@@ -123,6 +97,7 @@ const { posts } = Astro.props;
     border-radius: 0 8px 8px 0;
     transform-origin: left center;
     transform: rotateY(90deg);
+    view-transition-class: post-box-before;
   }
 
   /* Top face — attached to the top edge, folded backward */
@@ -135,6 +110,7 @@ const { posts } = Astro.props;
     border-radius: 0 0 8px 8px;
     transform-origin: center top;
     transform: rotateX(-90deg);
+    view-transition-class: post-box-after;
   }
 
   /* Front face — holds the content */
