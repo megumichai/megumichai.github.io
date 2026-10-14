@@ -1,0 +1,215 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatDate } from "../utils/date";
+
+interface Props {
+  posts: CollectionEntry<"posts">[];
+}
+
+const { posts } = Astro.props;
+---
+
+<ul class="post-list" transition:name="post-list">
+  {
+    posts.map((post) => {
+      const isDemo = post.data.type === "demo";
+      const href = isDemo ? post.data.url : `/posts/${post.id}`;
+      return (
+        <li class="post-item">
+          <div class="post-box">
+            <div class="post-face">
+              <div class="post-main">
+                <a
+                  class="post-title"
+                  href={href}
+                  target={isDemo ? "_blank" : undefined}
+                  rel={isDemo ? "noopener noreferrer" : undefined}
+                  data-post-id={post.id}
+                >
+                  {post.data.title}
+                </a>
+                <time class="post-date" datetime={post.data.pubDate.toISOString()}>
+                  {formatDate(post.data.pubDate)}
+                </time>
+              </div>
+              {isDemo ? (
+                <a
+                  class="post-type post-type--demo"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  demo
+                </a>
+              ) : (
+                <span class="post-type">post</span>
+              )}
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<script>
+  /*
+   * Right before the router takes its "old" snapshot, name only the clicked
+   * entry's title so it morphs into the detail heading (both end up carrying
+   * view-transition-name="post-title-<id>").
+   *
+   * The list itself carries view-transition-name="post-list" on *both* the
+   * home page and the post page, so instead of sliding away and disappearing
+   * it morphs from its centered position to the docked, half off-screen
+   * position and simply stays there.
+   */
+  const KEY = "__postListTransitionBound";
+  const w = window as unknown as Record<string, boolean>;
+
+  if (!w[KEY]) {
+    w[KEY] = true;
+
+    document.addEventListener(
+      "click",
+      (event) => {
+        const target = event.target as Element | null;
+        const link = target?.closest<HTMLAnchorElement>("a.post-title");
+        // Demo links open in a new tab, so they never get a transition.
+        if (!link || link.target === "_blank") return;
+
+        const id = link.dataset.postId;
+        if (!id) return;
+
+        link.style.setProperty("view-transition-name", `post-title-${id}`);
+      },
+      true,
+    );
+  }
+</script>
+
+<style>
+  .post-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Each entry is a 3D cuboid viewed slightly from the top-left:
+     the front face holds the content, plus a left face and a top face. */
+  .post-item {
+    --box-depth: 60px;
+    perspective: 2000px;
+  }
+
+  .post-box {
+    position: relative;
+    transform-style: preserve-3d;
+    /* nudge right to offset the extra width the left face adds on the left */
+    transform: translateX(20px) rotateY(26deg) rotateX(-10deg);
+    transition: transform 0.2s ease;
+  }
+
+  /* Left face — attached to the left edge, folded backward */
+  .post-box::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--box-depth);
+    background-color: var(--box-left);
+    border-radius: 0 8px 8px 0;
+    transform-origin: left center;
+    transform: rotateY(90deg);
+  }
+
+  /* Top face — attached to the top edge, folded backward */
+  .post-box::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--box-depth);
+    background-color: var(--box-top);
+    border-radius: 0 0 8px 8px;
+    transform-origin: center top;
+    transform: rotateX(-90deg);
+  }
+
+  /* Front face — holds the content */
+  .post-face {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 18px 24px -20px var(--shadow-color);
+  }
+
+  .post-item:hover .post-box {
+    transform: translateX(20px) rotateY(32deg) rotateX(-13deg);
+  }
+
+  .post-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .post-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .post-title:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .post-date {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .post-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--surface-recessed);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .post-type::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
+  .post-type--demo {
+    background-color: var(--accent-subtle);
+    color: var(--accent);
+  }
+
+  a.post-type:hover {
+    color: var(--accent-hover);
+    text-decoration: none;
+  }
+</style>

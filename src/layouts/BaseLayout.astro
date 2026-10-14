@@ -1,0 +1,250 @@
+---
+import { ClientRouter } from "astro:transitions";
+
+interface Props {
+  title: string;
+  description?: string;
+  mainClass?: string;
+}
+
+const {
+  title,
+  description = "一个用 Astro 搭建的个人博客",
+  mainClass,
+} = Astro.props;
+const siteName = "拾光笔记";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <title>{title === siteName ? title : `${title} · ${siteName}`}</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main class={mainClass ? `site-main ${mainClass}` : "site-main"}>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 {siteName} · 由 Astro 驱动</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  /*
+   * Theme palette inspired by Vercel's Geist design system.
+   * Achromatic grayscale + a single interactive blue (#0072F5),
+   * with status colors reserved for small indicators.
+   */
+  :root {
+    color-scheme: light;
+
+    /* Backgrounds */
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface-recessed: #f2f2f2;
+
+    /* Text */
+    --text: #171717;
+    --text-secondary: #4d4d4d;
+    --text-muted: #8f8f8f;
+
+    /* Borders */
+    --border: #ebebeb;
+    --border-strong: #e0e0e0;
+
+    /* Interactive accent */
+    --accent: #0072f5;
+    --accent-hover: #0060df;
+    --accent-subtle: #e8f2ff;
+
+    /* Status indicator colors (Geist) */
+    --blue: #0062d1;
+    --cyan: #52aeff;
+    --green: #45a557;
+    --amber: #ff990a;
+    --red: #e5484d;
+    --purple: #7820bc;
+    --pink: #ea3e83;
+
+    /* Code surfaces */
+    --code-bg: #171717;
+    --code-text: #ebebeb;
+    --code-inline-bg: #f2f2f2;
+
+    /* Elevation */
+    --shadow-color: rgba(0, 0, 0, 0.16);
+
+    /* 3D box faces */
+    --box-top: #ededed;
+    --box-left: #d9d9d9;
+
+    --radius: 6px;
+    --radius-pill: 9999px;
+    --max-width: 680px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+
+      --bg: #000000;
+      --surface: #111111;
+      --surface-recessed: #1a1a1a;
+
+      --text: #ededed;
+      --text-secondary: #a1a1a1;
+      --text-muted: #6f6f6f;
+
+      --border: #2a2a2a;
+      --border-strong: #3a3a3a;
+
+      --accent: #3291ff;
+      --accent-hover: #52a8ff;
+      --accent-subtle: #0f2438;
+
+      --code-bg: #111111;
+      --code-text: #ededed;
+      --code-inline-bg: #1f1f1f;
+
+      --shadow-color: rgba(0, 0, 0, 0.7);
+
+      --box-top: #1c1c1c;
+      --box-left: #050505;
+    }
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family:
+      "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+
+  a:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
+    border-radius: var(--radius);
+  }
+
+  .site-main,
+  .site-footer {
+    width: 100%;
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  .site-main {
+    flex: 1 0 auto;
+    padding-block: 48px 64px;
+  }
+
+  /*
+   * Post detail pages keep the docked list's visible half (16rem) clear on the
+   * right, so the article centres itself in the remaining space. Widen the
+   * container past the usual max-width so there is room to do that.
+   */
+  .site-main--detail {
+    max-width: none;
+    padding-right: max(20px, 17rem);
+  }
+
+  @media (max-width: 900px) {
+    .site-main--detail {
+      max-width: var(--max-width);
+      padding-right: 20px;
+    }
+  }
+
+  .site-footer {
+    padding-block: 28px 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .site-footer p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 480px) {
+    .site-main {
+      padding-block: 32px 48px;
+    }
+  }
+
+  /*
+   * View Transitions.
+   *
+   * The list is rendered on both the home page and the post page with the same
+   * view-transition-name="post-list". That makes the API *morph* it — sliding it
+   * to the right until half of it is off-screen and then simply leaving it
+   * there, rather than removing it — while the clicked title morphs into the
+   * detail heading (both carry view-transition-name="post-title-<id>").
+   */
+  ::view-transition-group(*) {
+    animation-duration: 0.5s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Page shell cross-fade. */
+  ::view-transition-old(root) {
+    animation: vt-fade-out 0.35s ease both;
+  }
+
+  ::view-transition-new(root) {
+    animation: vt-fade-in 0.4s ease 0.1s both;
+  }
+
+  @keyframes vt-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes vt-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+</style>
