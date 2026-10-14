@@ -139,10 +139,16 @@ const { posts } = Astro.props;
   }
 
   .post-title {
+    display: block;
+    max-width: 100%;
     font-size: 1.25rem;
     font-weight: 600;
     line-height: 1.4;
     color: var(--text);
+    /* keep long titles on a single line and truncate the overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .post-title:hover {
