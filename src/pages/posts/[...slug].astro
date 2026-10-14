@@ -86,10 +86,18 @@ const neighbours = ordered.filter(
     }
   }
 
+  /*
+   * The heading pins to the top of the viewport while the article scrolls
+   * underneath it, then a scroll-driven timeline grows and dims it until it
+   * reads as a faint watermark sitting *behind* the body copy. It lives in the
+   * background, so it must not swallow clicks meant for the article.
+   */
   .post-header {
-    margin-bottom: 32px;
     position: sticky;
-    top: -55rem;
+    top: 0;
+    z-index: 0;
+    margin-bottom: 32px;
+    pointer-events: none;
   }
 
   .post-header h1 {
@@ -109,6 +117,77 @@ const neighbours = ordered.filter(
     color: var(--text-muted);
   }
 
+  /*
+   * Scroll-driven "recede" timeline. Guarded by @supports so that browsers
+   * without scroll-driven animations simply keep the plain, opaque heading
+   * (the shorthand alone would otherwise jump straight to the end state).
+   *
+   * The article starts 25vh down the page, so it pins after ~25vh of scroll —
+   * the range ends there, meaning the title has hollowed out into an outline
+   * *by the time it reaches the top*, where it then stays put as a watermark
+   * behind the body copy.
+   */
+  @supports (animation-timeline: scroll()) {
+    .post-header h1 {
+      animation: title-recede linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 25vh;
+      /* The fill turns transparent, so `currentColor` would vanish with it —
+         the outline needs a colour of its own. */
+      -webkit-text-stroke-color: var(--text-muted);
+    }
+
+    /* Dates and tags clear out on the way up, before the heading takes over. */
+    .post-meta {
+      animation: meta-recede linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 5vh 20vh;
+    }
+
+    @keyframes title-recede {
+      from {
+        color: var(--text);
+        opacity: 1;
+        -webkit-text-stroke-width: 0;
+      }
+      to {
+        /* Only the outline is left: transparent fill, stroked glyphs. */
+        color: transparent;
+        opacity: 0.3;
+        -webkit-text-stroke-width: 1px;
+      }
+    }
+
+    @keyframes meta-recede {
+      to {
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      /* No watermark animation, so don't pin the opaque heading over the copy. */
+      .post-header {
+        top: -5rem;
+      }
+
+      .post-header h1,
+      .post-meta {
+        animation: none;
+      }
+    }
+  }
+
+  /*
+   * Fallback for browsers without scroll-driven animations: the heading would
+   * otherwise stay pinned at the top, fully opaque, on top of the article. Park
+   * it above the viewport instead so it simply scrolls away.
+   */
+  @supports not (animation-timeline: scroll()) {
+    .post-header {
+      top: -5rem;
+    }
+  }
+
   .tag {
     padding: 2px 9px;
     border-radius: var(--radius-pill);
@@ -118,6 +197,8 @@ const neighbours = ordered.filter(
   }
 
   .post-content {
+    position: relative;
+    z-index: 1;
     font-size: 1.0625rem;
     /* Named so the entrance can play on the transition snapshot below. */
     view-transition-name: post-content;
@@ -209,6 +290,8 @@ const neighbours = ordered.filter(
   }
 
   .post-footer {
+    position: relative;
+    z-index: 1;
     margin-top: 48px;
     padding-top: 20px;
     border-top: 1px solid var(--border);
