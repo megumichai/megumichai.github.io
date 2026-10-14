@@ -88,6 +88,8 @@ const neighbours = ordered.filter(
 
   .post-header {
     margin-bottom: 32px;
+    position: sticky;
+    top: -55rem;
   }
 
   .post-header h1 {
@@ -117,6 +119,27 @@ const neighbours = ordered.filter(
 
   .post-content {
     font-size: 1.0625rem;
+    /* Named so the entrance can play on the transition snapshot below. */
+    view-transition-name: post-content;
+    animation: post-content-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  /* Slide up + fade in as the article enters. */
+  @keyframes post-content-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .post-content {
+      animation: none;
+    }
   }
 
   .post-content :global(h2) {
@@ -157,7 +180,7 @@ const neighbours = ordered.filter(
     border-radius: 4px;
     background-color: var(--code-inline-bg);
     font-size: 0.875em;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-family: var(--font-mono);
   }
 
   .post-content :global(pre) {
@@ -167,6 +190,7 @@ const neighbours = ordered.filter(
     background-color: var(--code-bg);
     color: var(--code-text);
     overflow-x: auto;
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1.6;
   }
@@ -189,5 +213,24 @@ const neighbours = ordered.filter(
     padding-top: 20px;
     border-top: 1px solid var(--border);
     font-size: 0.9375rem;
+  }
+</style>
+
+<style is:global>
+  /*
+   * When the article is navigated to (rather than loaded directly) the live
+   * element is hidden behind the view-transition snapshot, so the entrance has
+   * to be played by the snapshot's pseudo-element instead. This has to live
+   * outside the scoped block: Astro's scoping would prefix it with the
+   * component attribute and the selector would never match.
+   */
+  ::view-transition-new(post-content) {
+    animation: post-content-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-new(post-content) {
+      animation: none;
+    }
   }
 </style>
