@@ -4,12 +4,44 @@ import PostDate from "./PostDate.astro";
 
 interface Props {
   posts: CollectionEntry<"posts">[];
+  /** Show the All / Post / Demo filter cuboids above the list. */
+  filterable?: boolean;
 }
 
-const { posts } = Astro.props;
+const { posts, filterable = false } = Astro.props;
+
+const filters = [
+  { value: "all", label: "All" },
+  { value: "post", label: "Post" },
+  { value: "demo", label: "Demo" },
+];
 ---
 
-<ul class="post-list">
+{
+  filterable && (
+    <div
+      class="post-filter"
+      role="group"
+      aria-label="筛选文章"
+      data-post-filter-group
+    >
+      {filters.map((filter, index) => (
+        <button
+          type="button"
+          class="filter-item"
+          data-post-filter={filter.value}
+          aria-pressed={index === 0 ? "true" : "false"}
+        >
+          <span class="filter-box">
+            <span class="filter-face">{filter.label}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+<ul class="post-list" data-post-list>
   {
     posts.map((post) => {
       const isDemo = post.data.type === "demo";
@@ -17,6 +49,7 @@ const { posts } = Astro.props;
       return (
         <li
           class="post-item"
+          data-post-type={isDemo ? "demo" : "post"}
           transition:name={post.id}
         >
           <div class="post-box">
@@ -65,6 +98,111 @@ const { posts } = Astro.props;
     width: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  /* Three miniature cuboids above the list, doubling as filter buttons:
+     All / Post / Demo. Same 3D construction as a post item, just smaller. */
+  .post-filter {
+    display: flex;
+    /* line the front faces up with the list items, which sit 20px right
+       (the filter boxes are shallower, so they only need 10px) */
+    margin: 0 0 34px 10px;
+    gap: 26px;
+  }
+
+  .filter-item {
+    --box-depth: 30px;
+    padding: 0;
+    /* leave room above the front face for the top face */
+    padding-top: 8px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    perspective: 2000px;
+  }
+
+  .filter-box {
+    position: relative;
+    display: block;
+    transform-style: preserve-3d;
+    /* nudge right to offset the left face, same as a post item */
+    transform: translateX(10px) rotateY(26deg) rotateX(-10deg);
+    transition: transform 0.2s ease;
+  }
+
+  .filter-item:hover .filter-box,
+  .filter-item[aria-pressed="true"] .filter-box {
+    transform: translateX(10px) rotateY(32deg) rotateX(-13deg);
+  }
+
+  /* Left face — attached to the left edge, folded backward */
+  .filter-box::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--box-depth);
+    background-color: var(--box-left);
+    border-radius: 0 6px 6px 0;
+    transform-origin: left center;
+    transform: rotateY(90deg);
+  }
+
+  /* Top face — attached to the top edge, folded backward */
+  .filter-box::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--box-depth);
+    background-color: var(--box-top);
+    border-radius: 0 0 6px 6px;
+    transform-origin: center top;
+    transform: rotateX(-90deg);
+  }
+
+  /* Front face — holds the label */
+  .filter-face {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 76px;
+    padding: 9px 16px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 18px 24px -20px var(--shadow-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .filter-item:hover .filter-face {
+    color: var(--accent);
+  }
+
+  .filter-item[aria-pressed="true"] .filter-face {
+    background-color: var(--accent-subtle);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .filter-item:focus-visible {
+    outline: none;
+  }
+
+  .filter-item:focus-visible .filter-face {
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
   }
 
   /* Each entry is a 3D cuboid viewed slightly from the top-left:
@@ -187,3 +325,169 @@ const { posts } = Astro.props;
     text-decoration: none;
   }
 </style>
+
+<script>
+  /*
+   * Client-side filtering for the All / Post / Demo cuboids. Every entry
+   * carries data-post-type, so a filter just toggles each item's [hidden].
+   *
+   * The change is animated with a small FLIP: leaving items fold away, the
+   * survivors slide to their new place, and revealed items fade back in.
+   */
+  const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+  const EXIT_MS = 180;
+  const MOVE_MS = 320;
+
+  // Bumped on every filter change so a superseded exit/reflow bails out.
+  let filterRun = 0;
+
+  const prefersReducedMotion = () =>
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const FILTER_KEY = "post-filter";
+
+  const readFilter = () => {
+    try {
+      const value = sessionStorage.getItem(FILTER_KEY);
+      return value === "post" || value === "demo" ? value : "all";
+    } catch {
+      return "all";
+    }
+  };
+
+  const writeFilter = (value) => {
+    try {
+      sessionStorage.setItem(FILTER_KEY, value);
+    } catch {
+      /* storage unavailable — the filter just won't be remembered */
+    }
+  };
+
+  const setPressed = (group, value) => {
+    group.querySelectorAll("[data-post-filter]").forEach((button) => {
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.postFilter === value),
+      );
+    });
+  };
+
+  const filterItems = (value) => {
+    const list = document.querySelector("[data-post-list]");
+    if (!list) return;
+
+    const items = [...list.querySelectorAll("[data-post-type]")];
+    const shouldShow = (item) =>
+      value === "all" || item.dataset.postType === value;
+
+    if (prefersReducedMotion()) {
+      items.forEach((item) => (item.hidden = !shouldShow(item)));
+      return;
+    }
+
+    // Drop any in-flight animation from a previous click so measurements
+    // below reflect real layout positions, not a half-finished tween.
+    items.forEach((item) => item.getAnimations().forEach((a) => a.cancel()));
+
+    const outgoing = items.filter((item) => !item.hidden && !shouldShow(item));
+    const incoming = items.filter((item) => item.hidden && shouldShow(item));
+
+    // Measure each survivor, reflow in one shot, then animate from the old
+    // position to the new one (FLIP) while revealed items slide up.
+    const settle = () => {
+      items.forEach((item) => item.getAnimations().forEach((a) => a.cancel()));
+
+      const survivors = items.filter(
+        (item) => !item.hidden && shouldShow(item),
+      );
+      const before = new Map(
+        survivors.map((item) => [item, item.getBoundingClientRect().top]),
+      );
+
+      outgoing.forEach((item) => (item.hidden = true));
+      incoming.forEach((item) => (item.hidden = false));
+
+      survivors.forEach((item) => {
+        const delta = before.get(item) - item.getBoundingClientRect().top;
+        if (!delta) return;
+        item.animate(
+          [{ transform: `translateY(${delta}px)` }, { transform: "none" }],
+          { duration: MOVE_MS, easing: EASE },
+        );
+      });
+
+      incoming.forEach((item) => {
+        item.animate(
+          [
+            { opacity: 0, transform: "translateY(12px) scale(0.98)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: MOVE_MS, easing: EASE },
+        );
+      });
+    };
+
+    // Nothing leaves, so there is nothing to fold away first.
+    if (!outgoing.length) {
+      ++filterRun;
+      settle();
+      return;
+    }
+
+    outgoing.forEach((item) => {
+      item.animate(
+        [
+          { opacity: 1, transform: "none" },
+          { opacity: 0, transform: "translateX(-14px) scale(0.96)" },
+        ],
+        { duration: EXIT_MS, easing: EASE, fill: "forwards" },
+      );
+    });
+
+    const run = ++filterRun;
+    setTimeout(() => {
+      if (run === filterRun) settle();
+    }, EXIT_MS);
+  };
+
+  const applyFilter = (group, value) => {
+    writeFilter(value);
+    setPressed(group, value);
+    filterItems(value);
+  };
+
+  // Restore the last chosen filter after a ClientRouter swap or on first
+  // load, so going into a post and back keeps the list as the reader left it.
+  const restoreFilter = () => {
+    const group = document.querySelector("[data-post-filter-group]");
+    const list = document.querySelector("[data-post-list]");
+    if (!group || !list) return;
+
+    const value = readFilter();
+    setPressed(group, value);
+    // Apply instantly: replaying the fold/slide here would fight the page
+    // transition that is already animating the swapped-in list.
+    list.querySelectorAll("[data-post-type]").forEach((item) => {
+      item.hidden = value !== "all" && item.dataset.postType !== value;
+    });
+  };
+
+  if (!window.__postFilterReady) {
+    window.__postFilterReady = true;
+
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest?.("[data-post-filter]");
+      if (!button) return;
+      const group = button.closest("[data-post-filter-group]");
+      if (!group) return;
+      applyFilter(group, button.dataset.postFilter);
+    });
+
+    // Fires inside the view transition's update step, so the restored state
+    // is what the incoming page paints — no flash of the unfiltered list.
+    document.addEventListener("astro:after-swap", restoreFilter);
+  }
+
+  // The swap event only fires on navigations; cover the first load here.
+  restoreFilter();
+</script>
