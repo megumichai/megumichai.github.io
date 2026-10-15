@@ -37,8 +37,24 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm preview`         | Preview your build locally, before deploying     |
 | `pnpm fmt`             | Formats the source with oxfmt                    |
 | `pnpm lint`            | Lints the source with oxlint                     |
+| `pnpm typecheck`       | Type-checks the project with astro check         |
 | `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `pnpm astro -- --help` | Get help using the Astro CLI                     |
+
+## 🪝 Git hooks
+
+[Husky](https://typicode.github.io/husky/) installs a `pre-commit` hook that runs
+[lint-staged](https://github.com/lint-staged/lint-staged), so only the files you are
+about to commit are checked. The tasks live in `.lintstagedrc.mjs`:
+
+- `oxlint --fix` on JavaScript, TypeScript, and `.astro` files
+- `oxfmt --write` on the file types oxfmt supports
+- `pnpm typecheck` (once) when a TypeScript or `.astro` file is staged
+
+Any fixes are added back to the commit automatically. If something cannot be fixed
+automatically — or the type check fails — the commit is aborted.
+
+The hook is installed by the `prepare` script on `pnpm install`.
 
 ## 👀 Want to learn more?
 
