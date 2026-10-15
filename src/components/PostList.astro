@@ -346,7 +346,7 @@ const filters = [
 
   const FILTER_KEY = "post-filter";
 
-  const readFilter = () => {
+  const readFilter = (): string => {
     try {
       const value = sessionStorage.getItem(FILTER_KEY);
       return value === "post" || value === "demo" ? value : "all";
@@ -355,7 +355,7 @@ const filters = [
     }
   };
 
-  const writeFilter = (value) => {
+  const writeFilter = (value: string): void => {
     try {
       sessionStorage.setItem(FILTER_KEY, value);
     } catch {
@@ -363,8 +363,8 @@ const filters = [
     }
   };
 
-  const setPressed = (group, value) => {
-    group.querySelectorAll("[data-post-filter]").forEach((button) => {
+  const setPressed = (group: HTMLElement, value: string): void => {
+    group.querySelectorAll<HTMLElement>("[data-post-filter]").forEach((button) => {
       button.setAttribute(
         "aria-pressed",
         String(button.dataset.postFilter === value),
@@ -372,12 +372,12 @@ const filters = [
     });
   };
 
-  const filterItems = (value) => {
-    const list = document.querySelector("[data-post-list]");
+  const filterItems = (value: string): void => {
+    const list = document.querySelector<HTMLElement>("[data-post-list]");
     if (!list) return;
 
-    const items = [...list.querySelectorAll("[data-post-type]")];
-    const shouldShow = (item) =>
+    const items = [...list.querySelectorAll<HTMLElement>("[data-post-type]")];
+    const shouldShow = (item: HTMLElement) =>
       value === "all" || item.dataset.postType === value;
 
     if (prefersReducedMotion()) {
@@ -394,21 +394,26 @@ const filters = [
 
     // Measure each survivor, reflow in one shot, then animate from the old
     // position to the new one (FLIP) while revealed items slide up.
-    const settle = () => {
+    const settle = (): void => {
       items.forEach((item) => item.getAnimations().forEach((a) => a.cancel()));
 
       const survivors = items.filter(
         (item) => !item.hidden && shouldShow(item),
       );
-      const before = new Map(
-        survivors.map((item) => [item, item.getBoundingClientRect().top]),
+      const before = new Map<HTMLElement, number>(
+        survivors.map((item): [HTMLElement, number] => [
+          item,
+          item.getBoundingClientRect().top,
+        ]),
       );
 
       outgoing.forEach((item) => (item.hidden = true));
       incoming.forEach((item) => (item.hidden = false));
 
       survivors.forEach((item) => {
-        const delta = before.get(item) - item.getBoundingClientRect().top;
+        const from = before.get(item);
+        if (from === undefined) return;
+        const delta = from - item.getBoundingClientRect().top;
         if (!delta) return;
         item.animate(
           [{ transform: `translateY(${delta}px)` }, { transform: "none" }],
@@ -450,7 +455,7 @@ const filters = [
     }, EXIT_MS);
   };
 
-  const applyFilter = (group, value) => {
+  const applyFilter = (group: HTMLElement, value: string): void => {
     writeFilter(value);
     setPressed(group, value);
     filterItems(value);
@@ -458,29 +463,35 @@ const filters = [
 
   // Restore the last chosen filter after a ClientRouter swap or on first
   // load, so going into a post and back keeps the list as the reader left it.
-  const restoreFilter = () => {
-    const group = document.querySelector("[data-post-filter-group]");
-    const list = document.querySelector("[data-post-list]");
+  const restoreFilter = (): void => {
+    const group = document.querySelector<HTMLElement>(
+      "[data-post-filter-group]",
+    );
+    const list = document.querySelector<HTMLElement>("[data-post-list]");
     if (!group || !list) return;
 
     const value = readFilter();
     setPressed(group, value);
     // Apply instantly: replaying the fold/slide here would fight the page
     // transition that is already animating the swapped-in list.
-    list.querySelectorAll("[data-post-type]").forEach((item) => {
+    list.querySelectorAll<HTMLElement>("[data-post-type]").forEach((item) => {
       item.hidden = value !== "all" && item.dataset.postType !== value;
     });
   };
 
-  if (!window.__postFilterReady) {
-    window.__postFilterReady = true;
+  const filterWindow = window as Window & { __postFilterReady?: boolean };
+
+  if (!filterWindow.__postFilterReady) {
+    filterWindow.__postFilterReady = true;
 
     document.addEventListener("click", (event) => {
-      const button = event.target.closest?.("[data-post-filter]");
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest<HTMLElement>("[data-post-filter]");
       if (!button) return;
-      const group = button.closest("[data-post-filter-group]");
+      const group = button.closest<HTMLElement>("[data-post-filter-group]");
       if (!group) return;
-      applyFilter(group, button.dataset.postFilter);
+      applyFilter(group, button.dataset.postFilter ?? "all");
     });
 
     // Fires inside the view transition's update step, so the restored state
