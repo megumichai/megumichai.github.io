@@ -6,7 +6,7 @@ import { byPinnedThenDate } from "../utils/posts";
 
 const posts = (await getCollection("posts"))
   .filter((post) => !post.data.draft)
-  .sort(byPinnedThenDate);
+  .toSorted(byPinnedThenDate);
 ---
 
 <BaseLayout title="megumichai">

@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [".astro", "dist"],
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "env": {
+    "astro": true,
+    "browser": true,
+    "builtin": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "eslint/no-underscore-dangle": "off"
+  },
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  }
+}
