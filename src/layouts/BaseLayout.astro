@@ -247,6 +247,12 @@ const siteName = title;
 
   html {
     -webkit-text-size-adjust: 100%;
+    /*
+     * Always reserve the scrollbar's width so the layout does not jump when a
+     * page grows past the viewport (or shrinks back under it). No effect where
+     * the platform uses overlay scrollbars, which take up no space anyway.
+     */
+    scrollbar-gutter: stable;
   }
 
   /*
