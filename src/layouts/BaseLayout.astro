@@ -4,6 +4,7 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 import "lenis/dist/lenis.css";
 import ThemeToggle from "../components/ThemeToggle.astro";
+import LoadingIndicator from "astro-loading-indicator/component";
 
 interface Props {
   title: string;
@@ -37,6 +38,7 @@ const siteName = title;
     />
     <title>{title === siteName ? title : `${title} · ${siteName}`}</title>
     <ClientRouter />
+    <LoadingIndicator color="var(--accent)" />
     <script is:inline>
       /*
        * Theme state lives here rather than in ThemeToggle because it has to run
@@ -65,8 +67,7 @@ const siteName = title;
         const applyMode = (mode) => {
           const root = document.documentElement;
           const dark =
-            mode === "dark" ||
-            (mode === "system" && matchMedia(QUERY).matches);
+            mode === "dark" || (mode === "system" && matchMedia(QUERY).matches);
           root.dataset.theme = dark ? "dark" : "light";
           root.dataset.themeMode = mode;
 
